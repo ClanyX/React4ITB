@@ -3,7 +3,7 @@ import './App.css'
 import { useState } from 'react';
 import {
   Box,
-  Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField
+  Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField
 } from "@mui/material";
 
 function App() {
@@ -18,6 +18,23 @@ function App() {
 
   //Array unique zanr
   const [uzanr, setUzanr] = useState([]);
+
+  //Strankovani
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+
+  const pageChangeHandler = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const rowsPerPageChangeHandler = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0);
+  };
+
+  //usestate pro razeni
+  const [orderby, setOrderby] = useState("");
+  const [orderDirect, setOrderDirect] = useState("asc");
 
   useEffect(() => {
     fetch(API_URL)
@@ -47,6 +64,17 @@ function App() {
     })
   };
 
+  const getFilteredDataCount = () => {
+    return getFilerData().length;
+  }
+
+  const getFilteredDataSliced = () => {
+    const sli_filter = getFilerData();
+
+
+    return sli_filter.slice(page*rowsPerPage, page*rowsPerPage+rowsPerPage)
+  }
+
   return (
     <>
       <Container>
@@ -56,7 +84,7 @@ function App() {
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2}}>
           <TextField label="Filter by name" value={name} onChange={(e) => setName(e.target.value)} />
           
-          <FormControl sx={{minWidthL: 160}}>
+          <FormControl sx={{minWidth: 160}}>
             <InputLabel>Zanr</InputLabel>
             <Select label="Zanr" value={zanr} onChange={(e) => setZanr(e.target.value)}>
               <MenuItem value="">Vse</MenuItem>
@@ -85,7 +113,7 @@ function App() {
             </TableHead>
             <TableBody>
               {
-                getFilerData().map((item) => (
+                getFilteredDataSliced().map((item) => (
                   <TableRow>
                     <TableCell>{item.nazev}</TableCell>
                     <TableCell>{item.rok}</TableCell>
@@ -98,6 +126,17 @@ function App() {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Paging */}
+        <TablePagination 
+          component="div" 
+          count={getFilteredDataCount()} 
+          page={page} 
+          onPageChange={pageChangeHandler} 
+          rowsPerPage={rowsPerPage} 
+          onRowsPerPageChange={rowsPerPageChangeHandler} 
+          rowsPerPageOptions={[5, 10, 20]}
+        />
       </Container>
     </>
   )
