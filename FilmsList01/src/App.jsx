@@ -3,7 +3,7 @@ import './App.css'
 import { useState } from 'react';
 import {
   Box,
-  Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField
+  Container, FormControl, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, TextField
 } from "@mui/material";
 
 function App() {
@@ -36,6 +36,13 @@ function App() {
   const [orderby, setOrderby] = useState("");
   const [orderDirect, setOrderDirect] = useState("asc");
 
+  const handleSort = (x) => {
+    setOrderby(x);
+    const isASC = (orderby === x) && (orderDirect === "asc");
+
+    setOrderDirect(isASC ? "desc" : "asc");
+  };
+
   useEffect(() => {
     fetch(API_URL)
       .then((res) => res.json())
@@ -56,7 +63,7 @@ function App() {
 
       //Filter zanr
       let pozanr = true;
-      if(zanr !== ""){
+      if (zanr !== "") {
         pozanr = (item.zanr == zanr);
       }
 
@@ -71,8 +78,22 @@ function App() {
   const getFilteredDataSliced = () => {
     const sli_filter = getFilerData();
 
+    if (orderby) {
+      sli_filter.sort((a, b) => {
+        const aV = a[orderby] ?? "";
+        const bV = b[orderby] ?? "";
 
-    return sli_filter.slice(page*rowsPerPage, page*rowsPerPage+rowsPerPage)
+        const botNumbers = (!isNaN(aV) && !isNaN(bV));
+        if (botNumbers) {
+          return orderDirect === "asc" ? Number(aV) - Number(bV) : Number(bV) - Number(aV);
+        }
+        return orderDirect === "asc" ? String(aV).localeCompare(String(bV)) : String(bV).localeCompare(String(aV))
+      });
+
+    }
+
+
+    return sli_filter.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   }
 
   return (
@@ -81,10 +102,10 @@ function App() {
         <h1>React filter films</h1>
 
         {/* Filtrovani */}
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2}}>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
           <TextField label="Filter by name" value={name} onChange={(e) => setName(e.target.value)} />
-          
-          <FormControl sx={{minWidth: 160}}>
+
+          <FormControl sx={{ minWidth: 160 }}>
             <InputLabel>Zanr</InputLabel>
             <Select label="Zanr" value={zanr} onChange={(e) => setZanr(e.target.value)}>
               <MenuItem value="">Vse</MenuItem>
@@ -94,7 +115,6 @@ function App() {
                 ))
               }
             </Select>
-
           </FormControl>
         </Box>
 
@@ -105,10 +125,22 @@ function App() {
             <TableHead>
               <TableRow>
                 <TableCell>Nazev</TableCell>
-                <TableCell>Rok vydani</TableCell>
+                <TableCell><TableSortLabel
+                  active={orderby === "rok"}
+                  direction={orderby === "rok" ? orderDirect : "asc"}
+                  onClick={() => handleSort("rok")}
+                >Rok vydani</TableSortLabel></TableCell>
                 <TableCell>Zanr</TableCell>
-                <TableCell>Hodnoceni</TableCell>
-                <TableCell>Delka filmu</TableCell>
+                <TableCell><TableSortLabel
+                  active={orderby === "hodnoceni"}
+                  direction={orderby === "hodnoceni" ? orderDirect : "asc"}
+                  onClick={() => handleSort("hodnoceni")}
+                >Hodnoceni</TableSortLabel></TableCell>
+                <TableCell><TableSortLabel
+                  active={orderby === "delka"}
+                  direction={orderby === "delka" ? orderDirect : "asc"}
+                  onClick={() => handleSort("delka")}
+                >Delka filmu</TableSortLabel></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -128,13 +160,13 @@ function App() {
         </TableContainer>
 
         {/* Paging */}
-        <TablePagination 
-          component="div" 
-          count={getFilteredDataCount()} 
-          page={page} 
-          onPageChange={pageChangeHandler} 
-          rowsPerPage={rowsPerPage} 
-          onRowsPerPageChange={rowsPerPageChangeHandler} 
+        <TablePagination
+          component="div"
+          count={getFilteredDataCount()}
+          page={page}
+          onPageChange={pageChangeHandler}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={rowsPerPageChangeHandler}
           rowsPerPageOptions={[5, 10, 20]}
         />
       </Container>
